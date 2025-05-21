@@ -1,0 +1,2 @@
+We are hiring a Backend Developer with 1-2 years of experience in Python, Flask, and MySQL.
+Knowledge of REST APIs, Git, Docker, and Agile development is a plus.
