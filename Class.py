@@ -4,7 +4,7 @@ import os
 
 def extract_text_from_pdf(pdf_path):
     if not os.path.exists(pdf_path):
-        raise FileNotFoundError("PDF not found!")
+        raise FileNotFoundError("PLease add correct path!")
     return extract_text(pdf_path)
 
 def extract_text_from_docx(docx_path):
