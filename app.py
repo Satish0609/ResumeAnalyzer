@@ -22,10 +22,24 @@ st.markdown("""
         font-weight: bold;
         border-radius: 10px;
         padding: 10px 20px;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #e65c00;
+        transform: scale(1.05);
     }
     .stTextArea textarea, .stTextInput input {
         border: 2px solid #ff6600;
         border-radius: 10px;
+    }
+    footer {
+        visibility: hidden;
+    }
+    .footer-note {
+        text-align: center;
+        font-size: 14px;
+        color: gray;
+        margin-top: 40px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -83,3 +97,6 @@ if st.button("🎯 Get the Score"):
 
         except Exception as e:
             st.error(f"❌ Error processing resume: {e}")
+
+# ✅ Footer
+st.markdown("<div class='footer-note'>✨ Created by <strong>Satish Raurmath</strong></div>", unsafe_allow_html=True)
