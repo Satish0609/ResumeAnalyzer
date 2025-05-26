@@ -49,7 +49,7 @@ resume-jd-matcher/
 ├── requirements.txt        # Python dependencies
 └── README.md               # You're reading this!
 📸 Screenshot
-[Screenshot (27)](https://github.com/user-attachments/assets/9aaec02d-50a1-4a83-8637-d006599b501a)
+![Screenshot (27)](https://github.com/user-attachments/assets/9aaec02d-50a1-4a83-8637-d006599b501a)
 ![Screenshot (28)](https://github.com/user-attachments/assets/12ded07a-538f-4e52-8a9c-041959c72296)
 
 ✨ Created By
