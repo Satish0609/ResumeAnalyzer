@@ -1,73 +1,85 @@
 import streamlit as st
-from matcher import get_match_score, extract_resume_text
-from jd_loader import load_jd# Assuming you have these in matcher.py
+import validators
+import urllib.request
+from matcher import extract_resume_text, get_match_score, extract_keywords
+from io import BytesIO
 
-st.set_page_config(page_title="Resume-JD Matcher", page_icon="📄")
+# 🎨 Page setup
+st.set_page_config(page_title="Resume-JD Matcher", page_icon="📄", layout="centered")
+st.markdown("""
+    <style>
+    .main {
+        background-color: #fff9f0;
+    }
+    h1 {
+        color: #ff6600;
+        text-align: center;
+        font-size: 36px;
+    }
+    .stButton>button {
+        background-color: #ff6600;
+        color: white;
+        font-weight: bold;
+        border-radius: 10px;
+        padding: 10px 20px;
+    }
+    .stTextArea textarea, .stTextInput input {
+        border: 2px solid #ff6600;
+        border-radius: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-st.title("🤖 AI-Powered Resume & Job Description Matcher")
-st.write(
-    """
-    Upload your resume and job description, and get instant feedback on how well your resume matches the job.
-    Identify your strengths and find the skills you need to add to improve your chances.
-    """
-)
+st.title("📄 Resume to Job Description Matcher")
 
-# Upload files & input JD text
-resume_file = st.file_uploader("Upload your Resume (PDF or DOCX)", type=["pdf", "docx"])
-jd_text = st.text_area("Paste Job Description here")
+# 🚀 Upload or paste resume
+uploaded_file = st.file_uploader("Upload your Resume (PDF only)", type=["pdf"])
+linkedin_url = st.text_input("OR paste your LinkedIn Resume PDF URL")
 
-if resume_file and jd_text:
-    # Save uploaded resume temporarily
-    with open("temp_resume", "wb") as f:
-        f.write(resume_file.getbuffer())
+# 📌 Paste JD
+jd_text = st.text_area("Paste Job Description (JD)", height=180)
 
-    # Extract text based on file type
-    if resume_file.type == "application/pdf":
-        resume_text = extract_resume_text("temp_resume")
+if st.button("🎯 Get the Score"):
+    if not jd_text.strip():
+        st.error("⚠️ Please paste a Job Description.")
     else:
-        from docx import Document
+        try:
+            # Step 1: Get resume text
+            if uploaded_file is not None:
+                resume_text = extract_resume_text(BytesIO(uploaded_file.read()))
+            elif linkedin_url:
+                if not validators.url(linkedin_url):
+                    st.error("❌ Invalid LinkedIn URL.")
+                    st.stop()
+                tmp_path = "temp_resume.pdf"
+                urllib.request.urlretrieve(linkedin_url, tmp_path)
+                resume_text = extract_resume_text(tmp_path)
+            else:
+                st.error("📄 Please upload a resume file or provide a LinkedIn PDF URL.")
+                st.stop()
 
-        doc = Document("temp_resume")
-        resume_text = "\n".join([para.text for para in doc.paragraphs])
+            # Step 2: Match and extract
+            match_score = get_match_score(resume_text, jd_text)
+            resume_keywords = extract_keywords(resume_text)
+            jd_keywords = extract_keywords(jd_text)
 
-    # Load and clean JD
-    # Assuming load_jd cleans text; if not, just use jd_text directly
-    jd_cleaned = jd_text  # Or use your load_jd function if you want NLP cleaning
+            common_skills = resume_keywords & jd_keywords
+            missing_skills = jd_keywords - resume_keywords
 
-    # Get match results (assuming get_match_score returns dict with keys)
-    results = get_match_score(resume_text, jd_cleaned)
+            # Output
+            st.markdown(f"<h2 style='color:#27ae60;'>✅ Match Score: {match_score}%</h2>", unsafe_allow_html=True)
 
-    st.markdown("---")
+            st.markdown("### 🎯 Skills Found in Your Resume:")
+            st.success(", ".join(sorted(common_skills)) if common_skills else "No common skills found.")
 
-    # Show overall score with color-coded progress bar
-    score = results["score"]
-    st.subheader(f"📝 Resume-JD Match Score: {score:.2f}%")
-    st.progress(score / 100)
+            st.markdown("### 🚫 Missing Keywords From JD:")
+            st.warning(", ".join(sorted(missing_skills)) if missing_skills else "None. Great Job!")
 
-    st.markdown("---")
+            if missing_skills:
+                st.info(f"💡 Add these keywords if relevant:\n\n**{', '.join(sorted(missing_skills))}**")
+            else:
+                st.balloons()
+                st.success("🎉 Your resume already aligns well with the JD!")
 
-    # Show matched vs missing skills in two columns
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("### ✅ Skills present in your resume")
-        for skill in results["matched_skills"]:
-            st.markdown(f"<span style='color:green; font-weight:bold;'>• {skill}</span>", unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("### ❌ Missing skills from JD")
-        for skill in results["missing_skills"]:
-            st.markdown(f"<span style='color:red; font-weight:bold;'>• {skill}</span>", unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # Recommendations
-    st.subheader("💡 Recommendation")
-    st.write("Try adding these keywords to your resume if relevant:")
-    st.write(", ".join(results["missing_skills"]))
-
-else:
-    st.info("Upload your resume and paste the job description to see the match score.")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.caption("© 2025 AI Resume Matcher — by Satish Raurmath")
+        except Exception as e:
+            st.error(f"❌ Error processing resume: {e}")
